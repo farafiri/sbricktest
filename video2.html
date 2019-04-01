@@ -1,0 +1,66 @@
+
+<video id="player" controls autoplay></video><br><br>
+<button id="capture" style="width:100px;height:50px">CAPTURE!</button>&nbsp;
+<input id="name" style="width:300px;height:50px">&nbsp;
+<a href="#" id="downloader" download="image.png">DOWNLOAD!</a><br>
+<canvas id="snapshot" width=640 height=480></canvas><br>
+<script>
+  var player = document.getElementById('player'); 
+  var snapshotCanvas = document.getElementById('snapshot');
+  var captureButton = document.getElementById('capture');
+  var download = document.getElementById('downloader');
+  var videoTracks;
+  var handleSuccess = function(stream) {
+    // Attach the video stream to the video element and autoplay.
+    player.srcObject = stream;
+    videoTracks = stream.getVideoTracks();
+  };
+  
+  download.addEventListener('click', function() {
+    document.getElementById("downloader").download = document.getElementById("name").value + ".png";
+    document.getElementById("downloader").href = document.getElementById("snapshot").toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+  });
+  
+  captureButton.addEventListener('click', function() {
+    var context = snapshot.getContext('2d');
+    context.drawImage(player, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+	
+	between = function (x, from, to) {
+	    x = (x - from) / (to - from);
+		if (x > 1) {
+		    x = 1;
+		}
+		if (x < 0) {
+		    x = 0;
+		}
+		
+		return x;
+	}
+	
+    var image = context.getImageData(0, 0, snapshot.width, snapshot.height);
+    var thresh_red = 100;
+    var thresh_green = 100;
+    var thresh_blue = 100;
+
+    var channels = image.data.length/4;
+	console.log(channels);
+    for(var i=0;i<channels;i++){
+        var r = image.data[i*4 + 0];
+        var g = image.data[i*4 + 1];
+        var b = image.data[i*4 + 2] ;
+		var m =0; //(r + g + b)/ 3;
+		var dev = (r-m)*(r-m) + (g-m)*(g-m) + (b-m)*(b-m);
+		//var relativeDeviation = (dev + 200) / (m * m);
+		var gg = between(g / (r + 1), 0.97, 1.08) * between(g / (b + 1), 1.7, 2.4) * between(g, 40, 70);
+		var val = gg ? 127 + (128 * gg) : 0;
+		
+            image.data[i*4 + 0] = val;
+            image.data[i*4 + 1] = val;
+            image.data[i*4 + 2] = val;
+        
+    }
+    context.putImageData(image, 0,  0);
+  });
+  navigator.mediaDevices.getUserMedia({video: true})
+      .then(handleSuccess);
+</script>
