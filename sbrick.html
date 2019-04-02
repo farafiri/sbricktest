@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1,IE=edge" />
+	<meta name="viewport" content="user-scalable=yes, width=1280" />
+	
+	<script type="text/javascript" src="jquery-3.1.0.min.js"></script>
+	<script type="text/javascript" src="promise-queue.js"></script>
+	<script type="text/javascript" src="bluetooth.js"></script>
+	<script type="text/javascript" src="sbrick.js"></script>
+
+  </head>
+  <body>
+  <button onclick="SB.stopAll()">---</button>
+  <button onclick="SB.disconnect()">END</button>
+  <button onclick="SB.drive(SB.CHANNEL0, SB.CW, SB.MAX)">0+</button>
+  <button onclick="SB.drive(SB.CHANNEL0, SB.CCW, SB.MAX)">0-</button>
+  <button onclick="SB.drive(SB.CHANNEL1, SB.CW, SB.MAX)">1+</button>
+  <button onclick="SB.drive(SB.CHANNEL1, SB.CCW, SB.MAX)">1-</button>
+  <button onclick="SB.drive(SB.CHANNEL2, SB.CW, SB.MAX)">2+</button>
+  <button onclick="SB.drive(SB.CHANNEL2, SB.CCW, SB.MAX)">2-</button>
+  <button onclick="SB.drive(SB.CHANNEL3, SB.CW, SB.MAX)">3+</button>
+  <button onclick="SB.drive(SB.CHANNEL3, SB.CCW, SB.MAX)">3-</button>
+  
+	<script>
+  	  var SB = new SBrick();
+	  SB.connect();
+	</script>
+  </body>
+</html>
