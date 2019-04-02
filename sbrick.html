@@ -14,6 +14,7 @@
   <body>
   <button onclick="SB.stopAll()">---</button>
   <button onclick="SB.disconnect()">END</button>
+  <button onclick="SB.connect()">CONNECT</button>
   <button onclick="SB.drive(SB.CHANNEL0, SB.CW, SB.MAX)">0+</button>
   <button onclick="SB.drive(SB.CHANNEL0, SB.CCW, SB.MAX)">0-</button>
   <button onclick="SB.drive(SB.CHANNEL1, SB.CW, SB.MAX)">1+</button>
@@ -25,7 +26,6 @@
   
 	<script>
   	  var SB = new SBrick();
-	  SB.connect();
 	</script>
   </body>
 </html>
