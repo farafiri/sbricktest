@@ -12,7 +12,7 @@
 
   </head>
   <body>
-  <h1>version 0.0.4</h1>
+  <h1>version 0.0.5</h1>
   <button onclick="SB.stopAll()">---</button>
   <button onclick="SB.disconnect()">END</button>
   <button onclick="connect();">CONNECT</button>
@@ -27,6 +27,9 @@
   
 	<script>
   	  var SB = new SBrick();
+	  SB._log = function(msg) {
+	      document.getElementById("log1").innerHTML =  msg + '<br>' + document.getElementById("log1").innerHTML;
+	  }
 	  
 	  function connect() {
 	  alert('connect atempt');
@@ -43,5 +46,6 @@
 		  );
 	  }
 	</script>
+	<div id="log1"></div>
   </body>
 </html>
