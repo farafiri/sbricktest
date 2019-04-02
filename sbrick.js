@@ -253,7 +253,7 @@ let SBrick = (function() {
 				if( PORT.indexOf(port)!=-1 && direction!=null && power!=null ) {
 					resolve();
 				} else {
-					reject('Wrong input');
+					reject('Wrong input xcc');
 				}
 			} )
 			.then( ()=> {
