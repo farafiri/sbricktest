@@ -31,7 +31,12 @@
 	  function connect() {
 	  alert('connect atempt');
 	      SB.connect().then(
-		  function() {alert('connected');},
+		  function() {
+		      alert('connected');
+			  SB.getFirmwareVersion().then( version => {
+	              alert( version );
+              });
+          },
 		  function() {alert('not connected');}
 		  );
 	  }
