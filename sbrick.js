@@ -601,11 +601,7 @@ let SBrick = (function() {
 		* @param {string} msg - message to print or throw
 		*/
 		_error( msg ) {
-			if(this._debug) {
-				console.debug(msg);
-			} else {
-				throw msg;
-			}
+			document.getElementById("log1").innerHTML =  'XERROR:' + msg + '<br>' + document.getElementById("log1").innerHTML;
 		}
 
 		/**
@@ -613,9 +609,7 @@ let SBrick = (function() {
 		* @param {string} msg - message to print
 		*/
 		_log( msg ) {
-			if(this._debug) {
-				console.log(msg);
-			}
+			document.getElementById("log1").innerHTML =  msg + '<br>' + document.getElementById("log1").innerHTML;
 		}
 
   }
