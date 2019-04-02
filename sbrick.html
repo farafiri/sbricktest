@@ -8,11 +8,11 @@
 	<script type="text/javascript" src="jquery-3.1.0.min.js"></script>
 	<script type="text/javascript" src="promise-queue.js"></script>
 	<script type="text/javascript" src="bluetooth.js"></script>
-	<script type="text/javascript" src="sbrick2.js?q=3"></script>
+	<script type="text/javascript" src="sbrick2.js?q=4"></script>
 
   </head>
   <body>
-  <h1>version 0.0.12</h1>
+  <h1>version 0.0.13</h1>
   <button onclick="SB.stopAll()">---</button>
   <button onclick="SB.disconnect()">END</button>
   <button onclick="connect();">CONNECT</button>
@@ -38,7 +38,7 @@
 		      alert('connected');
 			  SB._log('ddd');
 			  setTimeout(function () {
-				  SB.drive(SB.CHANNEL3, SB.CW, SB.MAX).then(
+				  SB.drive(SB.PORT3, SB.CW, SB.MAX).then(
 					  function() {alert('go');},
 					  function(a, b) {alert('no go ' + a + ' ' + b);}
 				  );
