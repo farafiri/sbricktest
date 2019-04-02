@@ -12,7 +12,7 @@
 
   </head>
   <body>
-  <h1>version 0.0.3</h1>
+  <h1>version 0.0.4</h1>
   <button onclick="SB.stopAll()">---</button>
   <button onclick="SB.disconnect()">END</button>
   <button onclick="connect();">CONNECT</button>
@@ -35,7 +35,7 @@
 		      alert('connected');
 			  SB.drive(SB.CHANNEL3, SB.CW, SB.MAX).then(
 			      function() {alert('go');},
-				  function() {alert('no go');}
+				  function(a, b) {alert('no go ' + a + ' ' + b);}
 		      );
 			  
           },
