@@ -12,7 +12,7 @@
 
   </head>
   <body>
-  <h1>version 0.0.2</h1>
+  <h1>version 0.0.3</h1>
   <button onclick="SB.stopAll()">---</button>
   <button onclick="SB.disconnect()">END</button>
   <button onclick="connect();">CONNECT</button>
@@ -33,9 +33,11 @@
 	      SB.connect().then(
 		  function() {
 		      alert('connected');
-			  SB.getFirmwareVersion().then( version => {
-	              alert( version );
-              });
+			  SB.drive(SB.CHANNEL3, SB.CW, SB.MAX).then(
+			      function() {alert('go');},
+				  function() {alert('no go');}
+		      );
+			  
           },
 		  function() {alert('not connected');}
 		  );
