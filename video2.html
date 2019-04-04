@@ -1,4 +1,4 @@
-<h1>v 3</h1>
+<h1>v 5</h1>
 <video id="player" style="display:block;" autoplay></video><br><br>
 <div id="output"></div>
 <canvas id="snapshot" width=320 height=240></canvas><br>
@@ -108,7 +108,7 @@
 		var m =0; //(r + g + b)/ 3;
 		var dev = (r-m)*(r-m) + (g-m)*(g-m) + (b-m)*(b-m);
 		//var relativeDeviation = (dev + 200) / (m * m);
-		var gg = between(g / (r + 1), 0.94, 1.04) * between(g / (b + 1), 3.0, 3.4) * between(g, 80, 150);
+		var gg = between(g / (r + 1), 0.94, 1.04) * between(g / (b + 1), 2.4, 3.2) * between(g, 80, 150);
 		var val = gg * 255;
 		
             image.data[i*4 + 0] = val;
@@ -132,9 +132,11 @@
 	console.log('dist', dist);
 	console.log('x', x);
 	console.log('time', +new Date() - start);
+	console.log(points);
   }
   
-  setInterval(vid, 500);
+  //setInterval(vid, 500);
+  setTimeout(vid, 5000);
   
   navigator.mediaDevices.getUserMedia({video: {
    "facingMode": 
