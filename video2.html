@@ -136,6 +136,9 @@
   
   setInterval(vid, 500);
   
-  navigator.mediaDevices.getUserMedia({video: true})
+  navigator.mediaDevices.getUserMedia({video: {
+   "facingMode": 
+      { "ideal": "environment" }
+  }})
       .then(handleSuccess);
 </script>
