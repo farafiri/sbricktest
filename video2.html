@@ -1,14 +1,10 @@
 
-<video id="player" controls autoplay></video><br><br>
-<button id="capture" style="width:100px;height:50px">CAPTURE!</button>&nbsp;
-<input id="name" style="width:300px;height:50px">&nbsp;
-<a href="#" id="downloader" download="image.png">DOWNLOAD!</a><br>
-<canvas id="snapshot" width=640 height=480></canvas><br>
+<video id="player" style="display:none;" autoplay></video><br><br>
+<div id="output"></div>
+<canvas id="snapshot" width=320 height=240></canvas><br>
 <script>
   var player = document.getElementById('player'); 
   var snapshotCanvas = document.getElementById('snapshot');
-  var captureButton = document.getElementById('capture');
-  var download = document.getElementById('downloader');
   var videoTracks;
   var handleSuccess = function(stream) {
     // Attach the video stream to the video element and autoplay.
@@ -16,12 +12,67 @@
     videoTracks = stream.getVideoTracks();
   };
   
-  download.addEventListener('click', function() {
-    document.getElementById("downloader").download = document.getElementById("name").value + ".png";
-    document.getElementById("downloader").href = document.getElementById("snapshot").toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-  });
+  function findPoints(data, width, height) {
+      for (var x = 0; x < width; x++) {
+	      data[x][0] = 0;
+		  data[x][height - 1] = 0;
+	  }
+	  for (var y = 0; y < height; y++) {
+	      data[0][y] = 0;
+		  data[width - 1][y] = 0;
+	  }
+	  
+      var results = [];
+      for (var x = width - 2; x > 0; x--) {
+	      for (var y = height - 2; y > 0; y--) {
+		      if (data[x][y] > 0) {
+			      var points = [[x, y]];
+				  var sumX = 0;
+				  var sumY = 0;
+				  var sum = 0;
+				  var count = 0;
+				  
+				  for(var i = 0; points[i]; i++) {
+				      var px = points[i][0];
+					  var py = points[i][1];
+					  val = data[px][py];
+					  if (val > 0) {
+						  sumX += px * val;
+						  sumY += py * val;
+						  sum += val;
+						  count += 1;
+						  data[px][py] = 0;
+						  for(var j = -1; j < 2; j++) {
+							  for(var k = -1; k < 2; k++) {
+								  if (data[px+j][py+k] > 0) {
+									points.push([px+j, py+k]);
+								  }
+							  }
+						  }
+					  }
+                  }
+				  console.log(i, px, py);
+
+                  results.push({
+                    x: sumX / sum,
+					y: sumY / sum,
+					avg: sum / count,
+					count: count,
+					sum: sum
+                  });				  
+			  }
+		  }
+	  }
+	  
+	  results.sort(function(a, b) {
+	    return b.sum - a.sum;
+	  });
+	  
+	  return results;
+  }
   
-  captureButton.addEventListener('click', function() {
+  function vid() {
+    var start = new Date();
     var context = snapshot.getContext('2d');
     context.drawImage(player, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 	
@@ -37,6 +88,12 @@
 		return x;
 	}
 	
+	var width = snapshot.width;
+	var height = snapshot.height;
+	var data = [];
+	for (var i = 0; i < width; i++) {
+	  data[i] = [];
+	};
     var image = context.getImageData(0, 0, snapshot.width, snapshot.height);
     var thresh_red = 100;
     var thresh_green = 100;
@@ -51,16 +108,30 @@
 		var m =0; //(r + g + b)/ 3;
 		var dev = (r-m)*(r-m) + (g-m)*(g-m) + (b-m)*(b-m);
 		//var relativeDeviation = (dev + 200) / (m * m);
-		var gg = between(g / (r + 1), 0.97, 1.08) * between(g / (b + 1), 1.7, 2.4) * between(g, 40, 70);
-		var val = gg ? 127 + (128 * gg) : 0;
+		var gg = between(g / (r + 1), 0.94, 1.04) * between(g / (b + 1), 3.0, 3.4) * between(g, 80, 150);
+		var val = gg * 255;
 		
             image.data[i*4 + 0] = val;
             image.data[i*4 + 1] = val;
             image.data[i*4 + 2] = val;
-        
+		data[i % width][Math.floor(i / width)] = gg;
     }
+	var points = findPoints(data, width, height);
+	var table = '<table>';
+	//for(i = 0; i < points.length; i++) {
+	//    table += '<tr><td>' + points[i].x + '</td><td>' + points[i].y + '</td><td>' + points[i].sum + '</td><td>' + points[i].avg + '</td></tr>';
+	//};
+	
     context.putImageData(image, 0,  0);
-  });
+	
+	var dist = Math.abs(points[0].x - points[1].x);
+	var x = points[0].x + points[1].x;
+	table += '<tr><td>' + dist + '</td><td>' + x + '</td><td>' + (+new Date() - start) + '</td></tr>';
+	document.getElementById('output').innerHTML = table + '</table>';
+  }
+  
+  setInterval(vid, 500);
+  
   navigator.mediaDevices.getUserMedia({video: true})
       .then(handleSuccess);
 </script>
