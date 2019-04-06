@@ -10,7 +10,7 @@
 	<script type="text/javascript" src="sbrick2.js?q=4"></script>
   </head>
 <body>
-<h1>v 13</h1>
+<h1>v 20</h1>
 <video id="player" style="display:block;" autoplay></video><br><br>
 <div id="output"></div>
 <canvas id="snapshot" width=320 height=240></canvas><br>
@@ -63,7 +63,6 @@
 						  }
 					  }
                   }
-				  console.log(i, px, py);
 
                   results.push({
                     x: sumX / sum,
@@ -83,7 +82,7 @@
 	  return results;
   }
   
-  function vid() {
+  function getPosition() {
     var start = new Date();
     var context = snapshot.getContext('2d');
     context.drawImage(player, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
@@ -156,9 +155,7 @@
 	  y: py
     }
   }
-  
-  //setInterval(vid, 500);
-  setTimeout(vid, 5000);
+
   
   navigator.mediaDevices.getUserMedia({video: {
    "facingMode": 
@@ -170,21 +167,62 @@
 	  
   function connect() {
 	  SB.connect().then(
-	  function() {
-		  setTimeout(function () {
-			  SB.drive(SB.PORT1, SB.CW, SB.MAX);
-			  SB.drive(SB.PORT2, SB.CW, SB.MAX);
-			  setTimeout(function() {
-			    SB.stopAll();
-			  }, 3000);
-		  }, 100);
-		  
-	  },
+	  function() {alert('connected');},
 	  function() {alert('not connected');}
 	  );
   }
-  
+  // x -> PORT2 CW -> -
+  // y -> PORT0 CW -> +
+  // z -> PORT3 CW -> -
   setTimeout(connect, 1200);
+
+  var driving = false;
+  
+  function drivePath(path) {
+      driving = true;
+	  drivePath_(path);
+  }
+  
+  function pathStop() {
+      driving = false;
+	  SB.stopAll();
+  }
+  
+  function drivePath_(path, position) {
+    if (path.length && driving) {
+	  var position = position || getPosition();
+	  var nextPoint = path[0];
+	  var dx = nextPoint.x - position.x;
+	  var dy = nextPoint.y - position.y
+	  
+	  var dist = Mart.sqrt(dx * dx + dy * dy);
+	  if (dist < 0.03) {
+	    path.splice(0, 1);
+		drivePath_(path, position);
+		return;
+	  }
+	  
+	  var dxd = dx > 0 ? SB.CCW : SB.CW;
+      var dyd = dy > 0 ? SB.CW  : SB.CCW;
+
+      var dxp = between(Math.abs(dx) / dist, -0.15, 0.65);
+      dxp = dxp > 0.25 ? dxp : 0; //cutting as giving less than 25% power dont make any sense in this case
+      var dyp = between(Math.abs(dy) / dist, 0, 0.6);
+      dyp = dyp > 0.5 ? dyp : 0;  //cutting as giving less than 25% power dont make any sense in this case
+       
+	  SB.drive(SB.PORT2, dxd, Math.round(dxp * SB.MAX));
+      SB.drive(SB.PORT0, dyd, Math.round(dyp * SB.MAX));	  
+	   
+      setTimeout(function() {
+	    drivePath_(path);
+      }, 30);	
+	}
+  }
+  
+  path1 = [];
+  for(var i = 0; i < 100; i++) {
+    path1.push({x: 0.5 +0.3*Math.sin(i/3), y: 0.5 + 0.3*Math.cos(i/3)});
+  }  
 </script>
 </body>
 </html>
