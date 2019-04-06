@@ -209,6 +209,9 @@
       dxp = dxp > 0.25 ? dxp : 0; //cutting as giving less than 25% power dont make any sense in this case
       var dyp = between(Math.abs(dy) / dist, 0, 0.6);
       dyp = dyp > 0.5 ? dyp : 0;  //cutting as giving less than 25% power dont make any sense in this case
+	  
+	  console.log('dxp', dxp);
+	  console.log('dyp', dyp);
        
 	  SB.drive(SB.PORT2, dxd, Math.round(dxp * SB.MAX));
       SB.drive(SB.PORT0, dyd, Math.round(dyp * SB.MAX));	  
