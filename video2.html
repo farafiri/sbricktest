@@ -94,22 +94,10 @@
 	  return results;
   }
   
-  var draw1 = 0;
-  var dcount = 0;
-  var dtotal = 0;
-  var dgid = 0;
-  var dclr = 0;
-  var dpoints = 0;
-  var dpid = 0;
-  
   function getPosition() {
     var start = new Date();
     var context = snapshot.getContext('2d');
     context.drawImage(player, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-	
-	var timepoint = new Date();
-	dcount += 1;
-	draw1 += timepoint - start;
 	
 	var width = snapshot.width;
 	var height = snapshot.height;
@@ -119,7 +107,6 @@
 	};
     var image = context.getImageData(0, 0, snapshot.width, snapshot.height);
 	
-	dgid += new Date() - timepoint;
 	var timepoint = new Date();
     var thresh_red = 100;
     var thresh_green = 100;
@@ -139,35 +126,22 @@
 		image.data[i*4 + 2] = val;
 		data[i % width][Math.floor(i / width)] = gg;
     }
-	dclr += new Date() - timepoint;
-	var timepoint = new Date();
 	
 	var points = findPoints(data, width, height);
-	dpoints += new Date() - timepoint;
-	var timepoint = new Date();
+	var t3points = points.slice(0, 3);
+	t3points.sort(function(p1, p2) { return p1.x - p2.x; });
+	console.log(t3points);
 	var table = '<table>';
 	
     context.putImageData(image, 0,  0);
 	
-	dpid += new Date() - timepoint;
-	var timepoint = new Date();
-	dtotal += timepoint - start;
+	var dist = t3points[2].x - t3points[0].x;
 	
-	var dist = Math.abs(points[0].x - points[1].x);
-	var x = points[0].x + points[1].x;
-
-	//tr: d:42 x 470.5
-    //tl: d:41.5 x:180
-    //dr: d:67 x 564.4844231081647
-    //dl: d:67.2.5 x:93.5
-	
-	var maxdist = 67.2;
-	var mindist = 42;
+	var maxdist = 295;
+	var mindist = 163;
 	var py = 1 - between(1/dist, 1/maxdist, 1/mindist);
-	var reldist = between(dist, mindist, maxdist);
-    var maxx = (1-reldist)*470.5 + reldist*564.5;
-    var minx = (1-reldist)*180 + reldist*93.5;
-	var px = between(x, minx, maxx);
+	var px = between(t3points[1].x, t3points[0].x, t3points[2].x);
+	px = between(px, 0.045, 0.955);
 	
 		//table += '<tr><td>' + dist + '</td><td>' + x + '</td><td> px: ' + px + '</td><td> py: ' + py + '</td></tr>';
 	//document.getElementById('output').innerHTML = table + '</table>';
@@ -202,6 +176,7 @@
   var paused = false;
   
   function drivePath(path) {
+      console.clear();
       driving = true;
 	  drivePath_(path);
   }
@@ -228,7 +203,7 @@
 	  var dy = nextPoint.y - position.y
 	  
 	  var dist = Math.sqrt(dx * dx + dy * dy);
-	  if (dist < 0.05) {
+	  if (dist < 0.03) {
 	    path.splice(0, 1);
 		drivePath_(path, position);
 		return;
@@ -236,13 +211,13 @@
 	  
 	  var dxd = dx > 0 ? SB.CCW : SB.CW;
       var dyd = dy > 0 ? SB.CW  : SB.CCW;
-
-      var dxp = between(Math.abs(dx) / dist, -0.15, 0.65);
-      dxp = dxp > 0.25 ? dxp : 0; //cutting as giving less than 25% power dont make any sense in this case
-      var dyp = between(Math.abs(dy) / dist, 0, 0.6);
-      dyp = dyp > 0.5 ? dyp : 0;  //cutting as giving less than 25% power dont make any sense in this case
 	  
-	  console.clear();
+	  var pw = 1; //between(dist, -0.02, 0.16);
+
+      var dxp = between(Math.abs(dx) / dist, -0.1, 0.95) * pw;
+      //dxp = dxp > 0.2 ? dxp : 0; //cutting as giving less than 25% power dont make any sense in this case
+      var dyp = between(Math.abs(dy) / dist, -0.1, 0.95) * pw;
+      //dyp = dyp > 0.2 ? dyp : 0;  //cutting as giving less than 25% power dont make any sense in this case
 	  
 	  console.log('pos x', position.x);
 	  console.log('pos y', position.y);
@@ -250,21 +225,22 @@
 	  console.log('ds x', nextPoint.x);
 	  console.log('ds y', nextPoint.y);
 	  
-	  console.log('dx p', dxp);
-	  console.log('dy p', dyp);
+	  console.log('dx p', dxp * (dx > 0 ? 1 : -1));
+	  console.log('dy p', dyp * (dy > 0 ? 1 : -1));
        
-	  SB.drive(SB.PORT2, dxd, Math.round(dxp * SB.MAX));
-      SB.drive(SB.PORT0, dyd, Math.round(dyp * SB.MAX));	  
+	  SB.drive(SB.PORT3, dxd, Math.round(dxp * SB.MAX));
+      SB.drive(SB.PORT2, dyd, Math.round(dyp * SB.MAX));	  
 	   
       setTimeout(function() {
 	    drivePath_(path);
-      }, 10);	
+      }, 40);	
 	} else {
 	    SB.stopAll();
 	}
   }
   
   drivePath([{x:0.1, y:0.1}, {x:0.9, y:0.1}, {x:0.9, y:0.9}, {x:0.1, y:0.1}, {x:0.5, y:0.3}, {x:0.7, y:0.7}, {x: 0.6, y: 0.1}]);
+  drivePath([{x:0.1, y:0.1}, {x:0.9, y:0.1}, {x:0.9, y:0.9}]);
   
   path1 = [];
   for(var i = 0; i < 100; i++) {
