@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1,IE=edge" />
+	
+	<script type="text/javascript" src="jquery-3.1.0.min.js"></script>
+	<script type="text/javascript" src="promise-queue.js"></script>
+  </head>
+<body>
+<h1>v 21</h1>
+<img id="srcimg" src="a.jpg" style="display:none" crossOrigin="Anonymous" />
+<canvas id="src" width=440 height=550></canvas>
+<canvas id="p" width=440 height=550></canvas>
+<canvas id="out" width=440 height=550></canvas><br>
+<script>
+
+function between(x, from, to) {
+	x = (x - from) / (to - from);
+	if (x > 1) {
+		x = 1;
+	}
+	if (x < 0) {
+		x = 0;
+	}
+	
+	return x;
+}
+
+function setData(src, data) {
+    var srcdata = src.getImageData(0, 0, w, h);
+	
+	for(var x = 0; x < w; x++) {
+	    for(var y = 0; y < h; y++) {
+		    var index = 4 * (x + y * w);
+			var val = Math.max(0, Math.min(1, 1 - data[x][y])) * 255;
+			srcdata.data[index + 0] = val;
+			srcdata.data[index + 1] = val;
+			srcdata.data[index + 2] = val;
+	    }
+	}
+	
+	src.putImageData(srcdata, 0, 0);
+}
+
+function getData(src) {
+    var srcdata = src.getImageData(0, 0, w, h);
+    var result = [];
+	
+	//console.log(srcdata);
+	
+	for(var x = 0; x < w; x++) {
+	    result[x] = []; 
+	    for(var y = 0; y < h; y++) {
+		    var index = 4 * (x + y * w) + 2;
+			result[x][y] = 1 - srcdata.data[index] * 1.0 / 255;
+	    }
+	}
+	
+	return result;
+}
+
+function blur(data, radius) {
+   var sums = [[]];
+   for(var i = 0; i < h + 1; i++) {
+       sums[0][i] = 0;
+   }
+   
+   for(var i = 1; i < w + 1; i++) {
+       sums[i] = [0];
+   }
+   
+   for(var x = 0; x < w; x++) {
+	    for(var y = 0; y < h; y++) {
+		    sums[x + 1][y + 1] = sums[x][y + 1] + sums[x + 1][y] - sums[x][y] + data[x][y];
+	    }
+	}
+	
+    var result = [];
+	
+	for(var x = 0; x < w; x++) {
+	    result[x] = [];
+	    for(var y = 0; y < h; y++) {
+		    var x0 = x < radius ? 0 : x - radius;
+			var y0 = y < radius ? 0 : y - radius;
+			var x1 = Math.min(w, x + radius);
+			var y1 = Math.min(h, y + radius);
+			
+			var sum = sums[x1][y1] + sums[x0][y0] - sums[x1][y0] - sums[x0][y1];
+			result[x][y] = sum / ((x1 - x0)*(y1 - y0));
+	    }
+	}
+	
+	return result;
+}
+
+function edge(data, radius) {
+    var result = [];
+	
+	for(var x = 0; x < w; x++) {
+	    result[x] = [];
+	    for(var y = 0; y < h; y++) {
+		    var x0 = x < radius ? 0 : x - radius;
+			var y0 = y < radius ? 0 : y - radius;
+			var x1 = Math.min(w - 1, x + radius);
+			var y1 = Math.min(h - 1, y + radius);
+			
+			var dif = (Math.abs(data[x0][y] + data[x1][y] - 2*data[x][y]) + Math.abs(data[x][y0] + data[x][y1] - 2*data[x][y])) / 4;
+			result[x][y] = dif;
+	    }
+	}
+	
+	return result;
+}
+
+function edge2(data, radius) {
+    var result = [];
+	
+	for(var x = 0; x < w; x++) {
+	    result[x] = [];
+	    for(var y = 0; y < h; y++) {
+		    var x0 = x < radius ? 0 : x - radius;
+			var y0 = y < radius ? 0 : y - radius;
+			var x1 = Math.min(w - 1, x + radius);
+			var y1 = Math.min(h - 1, y + radius);
+			
+			var dif = (Math.abs(data[x0][y] - data[x][y]) + Math.abs(data[x1][y] - data[x][y]) + Math.abs(data[x][y0] - data[x][y]) + Math.abs(data[x][y1] - data[x][y])) / 4;
+			result[x][y] = dif;
+	    }
+	}
+	
+	return result;
+}
+
+function dirSum(data, x, y, angle, radius) {
+    var dx = Math.sin(angle * Math.PI * 2);
+	var dy = Math.cos(angle * Math.PI * 2);
+	
+	var sum = 0;
+	
+	for(var i = 0; i < radius; i += 0.5) {
+	    sum += data[Math.round(x + dx * i + Math.random() / 2 - 0.25)][Math.round(y + dy * i + Math.random() / 2 - 0.25)]
+	}
+	
+	return {
+	    x : x + radius * dx,
+		y : y + radius * dy,
+		dx : dx,
+		dy : dy,
+		v : sum / radius / 2
+	}
+}
+
+function m(f) {
+    var result = [];
+	
+	for(var x = 0; x < w; x++) {
+	    result[x] = [];
+	    for(var y = 0; y < h; y++) {
+			result[x][y] = f(x, y);
+	    }
+	}
+	
+	return result;
+}
+
+//function get
+
+var lines = [];
+var w = 440;
+var h = 550;
+var src = document.getElementById("src").getContext("2d");
+var out = document.getElementById("out").getContext("2d");
+var p = document.getElementById("p").getContext("2d");
+p.beginPath();
+p.rect(-10, -10, 600, 600);
+p.fillStyle = "white";
+p.fill();
+src.beginPath();
+src.rect(-10, -10, 600, 600);
+src.fillStyle = "white";
+src.fill();
+src.drawImage(document.getElementById("srcimg"), 0 ,0);
+p.filter = "blur(1.2px)";
+var srcdata = getData(src);
+var edged = edge2(blur(srcdata, 1), 2);
+var blured = blur(blur(edged, 12), 8);
+var orgb = blur(blur(srcdata, 10), 10);
+
+var srcdata = m((x,y) => between(0.8 * between(0.3 * (edged[x][y] / (blured[x][y] + 0.002) - 2.5), 0, 1) + 1.9 * (srcdata[x][y] - orgb[x][y] * 0.65), 0, 1));
+//setData(p, srcdata);
+
+setInterval((function() {
+//return null;
+    var points = [];;
+	var pdata = getData(p);
+	var actualData = m((x, y) => srcdata[x][y] - pdata[x][y] * 0.7);
+	//console.log(pdata);
+	var max = -100000;
+	var maxPoint = null;
+	for(var x = 10; x < w - 10; x++) {
+	    for(var y = 10; y < h - 10; y++) {
+	        var actual = actualData[x][y]
+			if (actual > max) {
+			    max = actual;
+				maxPoint = {x : x, y : y};
+			}
+	    }
+	}
+	var radius = 5;
+	if (max > 0.3) {
+	    p.beginPath();
+		p.moveTo(maxPoint.x, maxPoint.y);
+		points.push({x: maxPoint.x / w, y: maxPoint.y / h});
+		var point = null;
+		var result = null;
+		var bestPoint = null;
+		var bestResult = null;
+		var multiplier = null;
+		var prevPoint = maxPoint;
+		var n = 0;
+		
+		do {
+		    bestResult = -1;
+		
+		    for(var i = 0; i < 1; i += 0.03) {
+			    point = dirSum(actualData, prevPoint.x, prevPoint.y, i, 4);
+				multiplier = (prevPoint.x - maxPoint.x) * point.dx + (prevPoint.y - maxPoint.y) * point.dy;
+
+				if (multiplier >= 0) {
+				    result = (4 + multiplier) * point.v;
+					if (result > bestResult) {
+					    bestResult = result;
+						bestPoint = point;
+					}
+				}
+			}
+
+			if (bestPoint.v > 0.2) {
+                prevPoint = bestPoint;
+				p.lineTo(bestPoint.x, bestPoint.y);
+				points.push({x: bestPoint.x / w, y: bestPoint.y / h});
+            }			
+		} while (bestPoint.v > 0.3 + n++ / 20 && bestPoint.x > 10 && bestPoint.x < w - 10 && bestPoint.y > 0 && bestPoint.y < h - 10);
+		
+		p.stroke();
+		
+		if (points.length > 1) {
+		    lines.push({points : points});
+		}
+	} else {
+	    console.log('end');
+	}
+	
+	out.drawImage(document.getElementById("p"), 0, 0);
+}), 1000);
+
+</script>
+</html>
